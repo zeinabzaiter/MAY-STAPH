@@ -14,7 +14,7 @@ df['Total'] = df['MRSA'] + df['VRSA'] + df['Wild'] + df['Other']
 
 # Calculer les %
 df['% MRSA'] = (df['MRSA'] / df['Total']) * 100
-[df['% VRSA'] = (df['VRSA'] / df['Total']) * 100
+df['% VRSA'] = (df['VRSA'] / df['Total']) * 100
 
 # --- Titre ---
 st.set_page_config(page_title="Dashboard Surveillance MRSA/VRSA", layout="wide")
