@@ -5,7 +5,7 @@ import plotly.express as px
 # --- Charger les données ---
 df = pd.read_excel('staph_aureus_pheno_final.xlsx', header=0)
 
-# Nettoyer les colonnes (enlever espaces si besoin)
+# Nettoyer les colonnes (enlever espaces)
 df.columns = df.columns.str.strip()
 
 # Forcer les colonnes numériques
@@ -13,13 +13,16 @@ colonnes_a_convertir = ['MRSA', 'VRSA', 'Wild', 'Other']
 for col in colonnes_a_convertir:
     df[col] = pd.to_numeric(df[col], errors='coerce')
 
-# Corriger la colonne de date
+# Convertir la colonne "Semaine" en datetime
 df['Semaine'] = pd.to_datetime(df['Semaine'], errors='coerce')
+
+# Supprimer les lignes sans date valide
+df = df.dropna(subset=['Semaine'])
 
 # Ajouter la colonne Mois
 df['Mois'] = df['Semaine'].dt.to_period('M').astype(str)
 
-# Calculer le total par semaine
+# Calculer le total isolats par semaine
 df['Total'] = df['MRSA'] + df['VRSA'] + df['Wild'] + df['Other']
 
 # Calculer les pourcentages
@@ -31,15 +34,14 @@ df['% Other'] = (df['Other'] / df['Total']) * 100
 # Définir les seuils d'alerte
 seuil_mrsa = 31.875
 seuil_vrsa = 2.5
-
 df['MRSA_alerte'] = df['MRSA'] > seuil_mrsa
 df['VRSA_alerte'] = df['VRSA'] > seuil_vrsa
 
-# --- Page Streamlit ---
+# --- Configuration de la page ---
 st.set_page_config(page_title="Dashboard Surveillance MRSA/VRSA", layout="wide")
 st.title("🔍 Surveillance des Phénotypes Staphylococcus aureus - 2024")
 
-# --- Filtres ---
+# --- Filtres par mois ---
 mois_selectionnes = st.multiselect(
     "Sélectionner le(s) mois :",
     options=df['Mois'].unique(),
@@ -56,7 +58,7 @@ col2.metric("Total VRSA", df_filtre['VRSA'].sum())
 col3.metric("Alertes MRSA", int(df_filtre['MRSA_alerte'].sum()))
 col4.metric("Alertes VRSA", int(df_filtre['VRSA_alerte'].sum()))
 
-# --- Graphique Évolution MRSA et VRSA ---
+# --- Graphique MRSA & VRSA ---
 st.header("📈 Évolution Hebdomadaire MRSA et VRSA")
 fig1 = px.line(
     df_filtre,
@@ -74,10 +76,9 @@ fig1 = px.line(
 )
 fig1.update_layout(hovermode="x unified", title_text="MRSA et VRSA par semaine", title_x=0.5)
 fig1.update_yaxes(rangemode='tozero')
-
 st.plotly_chart(fig1, use_container_width=True)
 
-# --- Graphique Évolution Tous Phénotypes ---
+# --- Graphique Tous Phénotypes ---
 st.header("📊 Évolution Hebdomadaire de Tous les Phénotypes")
 fig2 = px.line(
     df_filtre,
@@ -105,14 +106,13 @@ fig2 = px.line(
 )
 fig2.update_layout(hovermode="x unified", title_text="Évolution des Phénotypes par Semaine", title_x=0.5)
 fig2.update_yaxes(rangemode='tozero')
-
 st.plotly_chart(fig2, use_container_width=True)
 
-# --- Tableau Alertes ---
+# --- Tableau des Alertes ---
 st.header("📋 Détails des Alertes")
 st.dataframe(df_filtre[['Semaine', 'MRSA', 'MRSA_alerte', 'VRSA', 'VRSA_alerte', 'Wild', 'Other']])
 
-# --- Bouton Télécharger ---
+# --- Téléchargement des données filtrées ---
 st.download_button(
     label="📥 Télécharger les données filtrées",
     data=df_filtre.to_csv(index=False).encode('utf-8'),
