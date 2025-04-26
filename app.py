@@ -3,7 +3,8 @@ import pandas as pd
 import plotly.express as px
 
 # --- Charger les données ---
-df = pd.read_excel('staph_aureus_pheno_final.xlsx')
+df = pd.read_excel('staph_aureus_pheno_final.xlsx', header=0)
+
 # Forcer les colonnes à être numériques
 colonnes_a_convertir = ['MRSA', 'VRSA', 'Wild', 'Other']
 for col in colonnes_a_convertir:
