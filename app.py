@@ -4,6 +4,13 @@ import plotly.express as px
 
 # --- Charger les données ---
 df = pd.read_excel('staph_aureus_pheno_final.xlsx')
+# Calcul des colonnes d'alerte
+seuil_mrsa = 31.875
+seuil_vrsa = 2.5
+
+df['MRSA_alerte'] = df['MRSA'] > seuil_mrsa
+df['VRSA_alerte'] = df['VRSA'] > seuil_vrsa
+
 
 # --- Préparation des données ---
 # Renommer la colonne date pour plus de clarté
