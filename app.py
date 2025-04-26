@@ -47,6 +47,8 @@ col1.metric("Total MRSA", df_filtre['MRSA'].sum())
 col2.metric("Total VRSA", df_filtre['VRSA'].sum())
 col3.metric("Alertes MRSA", int(df_filtre['MRSA_alerte'].sum()))
 col4.metric("Alertes VRSA", int(df_filtre['VRSA_alerte'].sum()))
+st.dataframe(df_filtre)
+
 
 # --- Graphique Interactif MRSA + VRSA ---
 st.header("📈 Évolution Hebdomadaire MRSA et VRSA")
