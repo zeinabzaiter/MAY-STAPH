@@ -8,7 +8,7 @@ df = pd.read_excel('staph_aureus_pheno_final.xlsx', header=0)
 # Nettoyer les colonnes
 df.columns = df.columns.str.strip()
 
-# Forcer les colonnes en numériques
+# Forcer les colonnes numériques
 colonnes_a_convertir = ['MRSA', 'VRSA', 'Wild', 'Other']
 for col in colonnes_a_convertir:
     df[col] = pd.to_numeric(df[col], errors='coerce')
@@ -31,20 +31,19 @@ df['% VRSA'] = (df['VRSA'] / df['Total']) * 100
 df['% Wild'] = (df['Wild'] / df['Total']) * 100
 df['% Other'] = (df['Other'] / df['Total']) * 100
 
-# --- Calcul des alertes selon la règle de Tukey ---
-# Calcul Tukey MRSA
+# --- Calcul des alertes Tukey ---
+# MRSA
 q1_mrsa = df['MRSA'].quantile(0.25)
 q3_mrsa = df['MRSA'].quantile(0.75)
 iqr_mrsa = q3_mrsa - q1_mrsa
 seuil_mrsa = q3_mrsa + 1.5 * iqr_mrsa
 
-# Calcul Tukey VRSA
+# VRSA
 q1_vrsa = df['VRSA'].quantile(0.25)
 q3_vrsa = df['VRSA'].quantile(0.75)
 iqr_vrsa = q3_vrsa - q1_vrsa
 seuil_vrsa = q3_vrsa + 1.5 * iqr_vrsa
 
-# Définir alertes
 df['MRSA_alerte'] = df['MRSA'] > seuil_mrsa
 df['VRSA_alerte'] = df['VRSA'] > seuil_vrsa
 
@@ -55,28 +54,32 @@ st.title("🔍 Surveillance des Phénotypes Staphylococcus aureus - 2024")
 # --- Filtres dynamiques ---
 st.sidebar.header("Filtres")
 mois_selectionnes = st.sidebar.multiselect(
-    "Sélectionner le(s) mois :", 
+    "Sélectionner le(s) mois :",
     options=df['Mois'].unique(),
-    default=df['Mois'].unique()
+    default=list(df['Mois'].unique())  # Correction ici
 )
 
 phenotypes_selectionnes = st.sidebar.multiselect(
     "Sélectionner les phénotypes :", 
     options=['Wild', 'Other', 'MRSA', 'VRSA'],
-    default=['Wild', 'Other', 'MRSA', 'VRSA']
+    default=['Wild', 'Other', 'MRSA', 'VRSA']  # Correction ici
 )
 
-# Appliquer filtres
+# Appliquer les filtres
 df_filtre = df[df['Mois'].isin(mois_selectionnes)]
 
-# --- Panneau d'alerte ---
+# --- Debug affichage rapide ---
+st.write("🔎 Aperçu des données filtrées :")
+st.dataframe(df_filtre)
+
+# --- Panneau Alerte ---
 alertes_detectees = []
 
 for idx, row in df_filtre.iterrows():
     if row['MRSA_alerte']:
-        alertes_detectees.append(f"🚨 Alerte MRSA détectée la semaine du {row['Semaine'].date()}")
+        alertes_detectees.append(f"🚨 Alerte MRSA détectée semaine du {row['Semaine'].date()}")
     if row['VRSA_alerte']:
-        alertes_detectees.append(f"🚨 Alerte VRSA détectée la semaine du {row['Semaine'].date()}")
+        alertes_detectees.append(f"🚨 Alerte VRSA détectée semaine du {row['Semaine'].date()}")
 
 if alertes_detectees:
     st.error('⚠️ Attention : Alertes détectées !')
@@ -91,7 +94,7 @@ col2.metric("Total VRSA", int(df_filtre['VRSA'].sum()))
 col3.metric("Alertes MRSA", int(df_filtre['MRSA_alerte'].sum()))
 col4.metric("Alertes VRSA", int(df_filtre['VRSA_alerte'].sum()))
 
-# --- Graphique ---
+# --- Graphique principal ---
 st.header("📈 Évolution Hebdomadaire des Phénotypes sélectionnés")
 fig = px.line(
     df_filtre,
@@ -122,11 +125,11 @@ fig.update_xaxes(type='date')
 fig.update_yaxes(rangemode='tozero')
 st.plotly_chart(fig, use_container_width=True)
 
-# --- Détails alertes ---
+# --- Détails Alertes ---
 st.header("📋 Détail des Alertes")
 st.dataframe(df_filtre[['Semaine', 'MRSA', 'MRSA_alerte', 'VRSA', 'VRSA_alerte', 'Wild', 'Other']])
 
-# --- Téléchargement CSV ---
+# --- Bouton de téléchargement ---
 st.download_button(
     label="📥 Télécharger les données filtrées",
     data=df_filtre.to_csv(index=False).encode('utf-8'),
