@@ -4,6 +4,11 @@ import plotly.express as px
 
 # --- Charger les données ---
 df = pd.read_excel('staph_aureus_pheno_final.xlsx')
+# Forcer les colonnes à être numériques
+colonnes_a_convertir = ['MRSA', 'VRSA', 'Wild', 'Other']
+for col in colonnes_a_convertir:
+    df[col] = pd.to_numeric(df[col], errors='coerce')
+
 
 # --- Préparation des données ---
 # Renommer la colonne date pour plus de clarté
