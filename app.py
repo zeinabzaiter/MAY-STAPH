@@ -5,6 +5,9 @@ import plotly.express as px
 # --- Charger les données ---
 df = pd.read_excel('staph_aureus_pheno_final.xlsx')
 
+# --- Forcer le bon nom de colonne ---
+df.rename(columns={df.columns[0]: 'Semaine'}, inplace=True)
+
 # --- Nettoyage ---
 df['Semaine'] = pd.to_datetime(df['Semaine'], errors='coerce')
 df = df.dropna(subset=['Semaine'])
@@ -44,7 +47,7 @@ seuil_vrsa = q3_vrsa + 1.5 * iqr_vrsa
 df['MRSA_alerte'] = df['MRSA'] > seuil_mrsa
 df['VRSA_alerte'] = df['VRSA'] > seuil_vrsa
 
-# --- Config de la page ---
+# --- Config Streamlit ---
 st.set_page_config(page_title="Dashboard Staphylococcus aureus", layout="wide")
 st.title("📈 Dashboard Hebdomadaire - Staphylococcus aureus")
 
@@ -62,7 +65,7 @@ phenotypes_selectionnes = st.sidebar.multiselect(
     default=['MRSA', 'VRSA', 'Wild', 'Other']
 )
 
-# Appliquer filtres
+# --- Application des filtres ---
 df_filtre = df[df['Mois'].isin(mois_selectionnes)]
 
 # --- Graphique ---
@@ -91,14 +94,14 @@ fig.update_yaxes(range=[0, 100], title='Nombre de cas (%)')  # Y de 0 à 100
 
 st.plotly_chart(fig, use_container_width=True)
 
-# --- Panneau Alertes ---
+# --- Alertes ---
 if df_filtre['MRSA_alerte'].any() or df_filtre['VRSA_alerte'].any():
     st.error("🚨 ALERTE : Dépassement seuil Tukey détecté sur certaines semaines.")
     st.dataframe(df_filtre[['Semaine', 'MRSA', 'MRSA_alerte', 'VRSA', 'VRSA_alerte']])
 else:
     st.success("✅ Aucune alerte détectée.")
 
-# --- Détail des Données ---
+# --- Détail des données ---
 st.header("📝 Détail des Données Filtrées")
 st.dataframe(df_filtre)
 
